@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Check formatting
+        run: swift format lint --recursive --strict Sources Tests Package.swift scripts/generate-app-icon.swift
+
+      - name: Run tests
+        run: swift test --disable-sandbox
+
+      - name: Validate resources and scripts
+        run: |
+          plutil -lint Resources/*.plist
+          zsh -n scripts/*.sh Resources/manage-local-helper.sh
+
+      - name: Build ad-hoc app bundle
+        run: scripts/build-app.sh
+
+      - name: Verify app bundle
+        run: |
+          test -x build/Liddddd.app/Contents/MacOS/Liddddd
+          codesign --verify --deep --strict --verbose=2 build/Liddddd.app

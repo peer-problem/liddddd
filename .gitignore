@@ -1,0 +1,9 @@
+.build/
+.swiftpm/
+build/
+.DS_Store
+*.dSYM
+*.xcarchive
+*.zip
+*.sha256
+notarytool-*.json
