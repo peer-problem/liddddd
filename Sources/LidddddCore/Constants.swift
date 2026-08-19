@@ -5,7 +5,7 @@ public enum LidddddConstants {
   public static let appBundleIdentifier = "io.github.leejaywon.liddddd"
   public static let helperIdentifier = "io.github.leejaywon.liddddd.helper"
   public static let helperPlistName = "io.github.leejaywon.liddddd.helper.plist"
-  public static let repositoryURL = URL(string: "https://github.com/leejaywon/Liddddd")!
+  public static let repositoryURL = URL(string: "https://github.com/peer-problem/liddddd")!
   public static let protocolVersion = 1
   public static let helperVersion = "0.1.0"
 

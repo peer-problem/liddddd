@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 
 let projectURL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-let masterURL = projectURL.appendingPathComponent("Artwork/AppIcon-1024.png")
+let masterURL = projectURL.appendingPathComponent("Artwork/liddddd-appicon.png")
 let outputURL = projectURL.appendingPathComponent("Resources/Liddddd.icns")
 
 let masterPixels = 1024

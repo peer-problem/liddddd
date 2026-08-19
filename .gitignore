@@ -5,5 +5,7 @@ build/
 *.dSYM
 *.xcarchive
 *.zip
+*.dmg
 *.sha256
+dmgs/
 notarytool-*.json

@@ -34,7 +34,10 @@ final class HelperInstaller {
       return .ready
     case .requiresApproval:
       return .approvalRequired
-    case .notRegistered:
+    // A fresh packaged daemon can report notFound before ServiceManagement has
+    // created its background-task record. Registration validates the bundle
+    // and moves it to enabled or requiresApproval when the payload is valid.
+    case .notRegistered, .notFound:
       do {
         try service.register()
         return availability(for: service.status)
@@ -46,12 +49,6 @@ final class HelperInstaller {
             "Sleep control could not be set up: \(error.localizedDescription)")
         #endif
       }
-    case .notFound:
-      #if LIDDDDD_ALLOW_ADHOC
-        return .localHelperInstallRequired
-      #else
-        return .unavailable("This copy of Liddddd is missing its sleep control.")
-      #endif
     @unknown default:
       return .unavailable("Liddddd could not check its sleep control.")
     }

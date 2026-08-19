@@ -24,10 +24,9 @@ closed. Super light & super useful.
 
 ## Requirements
 
+- Apple silicon Mac
 - macOS 15 or later
 - Administrator approval to install the sleep-control helper
-- Apple silicon for direct chip-temperature readings; other Macs still use
-  macOS thermal-state protection
 
 ## Remove
 
