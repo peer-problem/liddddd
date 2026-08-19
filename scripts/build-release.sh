@@ -11,6 +11,18 @@ if [[ -z "${SIGNING_IDENTITY}" || "${SIGNING_IDENTITY}" == "-" ]]; then
     exit 1
 fi
 
+if [[ "${SIGNING_IDENTITY}" != "Developer ID Application: "* ]]; then
+    echo "CODESIGN_IDENTITY must be a Developer ID Application certificate." >&2
+    exit 1
+fi
+
+if ! security find-identity -v -p codesigning | \
+    grep -Fq "\"${SIGNING_IDENTITY}\""
+then
+    echo "The requested Developer ID Application identity is not installed." >&2
+    exit 1
+fi
+
 cd "${PROJECT_DIRECTORY}"
 "${SCRIPT_DIRECTORY}/build-app.sh"
 
@@ -26,16 +38,19 @@ do
 done
 
 codesign --verify --deep --strict --verbose=2 "${APP_BUNDLE}"
+if ! codesign -dvvv "${APP_BUNDLE}" 2>&1 | \
+    grep -Fq "Authority=Developer ID Application:"
+then
+    echo "The app is not signed with a Developer ID Application certificate." >&2
+    exit 1
+fi
 
 VERSION=$(/usr/libexec/PlistBuddy \
     -c "Print :CFBundleShortVersionString" \
     "${APP_BUNDLE}/Contents/Info.plist")
-ARCHIVE="${PROJECT_DIRECTORY}/build/Liddddd-${VERSION}.zip"
-CHECKSUM="${ARCHIVE}.sha256"
+ARCHIVE="${PROJECT_DIRECTORY}/build/Liddddd-${VERSION}-notarization.zip"
 
 /usr/bin/ditto -c -k --keepParent "${APP_BUNDLE}" "${ARCHIVE}"
-/usr/bin/shasum -a 256 "${ARCHIVE}" > "${CHECKSUM}"
 
 echo "Built ${ARCHIVE}"
-echo "Built ${CHECKSUM}"
-echo "Notarization is still required before public distribution."
+echo "Submit this archive for notarization before creating the release DMG."

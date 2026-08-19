@@ -49,12 +49,67 @@ The release build:
 - enables the hardened runtime and secure timestamps;
 - excludes development-only helper installation resources;
 - verifies the final app bundle;
-- creates `build/Liddddd-<version>.zip`; and
-- creates a matching `.sha256` checksum file.
+- verifies that the identity is an installed Developer ID Application
+  certificate; and
+- creates `build/Liddddd-<version>-notarization.zip` for Apple notarization.
 
-The script does not submit the build to Apple. Notarize the ZIP, staple the
-accepted ticket to `build/Liddddd.app`, then recreate the final ZIP and checksum
-before attaching them to a GitHub Release.
+Store notarization credentials in the macOS Keychain. Do not put an app-specific
+password in a script, environment file, shell history, or the repository:
+
+```bash
+xcrun notarytool store-credentials Liddddd-notary \
+  --apple-id "YOUR_APPLE_ID" \
+  --team-id "YOUR_TEAM_ID"
+```
+
+After the secure password prompt succeeds, build the complete release:
+
+```bash
+CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+  NOTARY_PROFILE="Liddddd-notary" \
+  scripts/notarize-release.sh
+```
+
+The notarization script submits the app archive, staples the accepted ticket to
+the app, creates a drag-to-Applications DMG, submits and staples the DMG, runs
+code-signing and Gatekeeper assessments, and creates a SHA-256 checksum.
+
+## Certificate-owner handoff
+
+Keep the Developer ID private key, Apple ID credentials, and app-specific
+password on the certificate owner's Mac. Do not send an unsigned app for blind
+signing or exchange a `.p12` file. Instead, give the certificate owner the exact
+Git commit to review and build:
+
+```bash
+git clone https://github.com/peer-problem/liddddd.git
+cd liddddd
+git checkout --detach COMMIT_SHA
+git status --short
+
+xcrun notarytool store-credentials Liddddd-notary \
+  --apple-id "CERTIFICATE_OWNER_APPLE_ID" \
+  --team-id "CERTIFICATE_OWNER_TEAM_ID"
+
+CODESIGN_IDENTITY="Developer ID Application: Certificate Owner (TEAMID)" \
+  NOTARY_PROFILE="Liddddd-notary" \
+  scripts/notarize-release.sh
+```
+
+The certificate owner should return only these public release artifacts:
+
+- `build/Liddddd-<version>.dmg`
+- `build/Liddddd-<version>.dmg.sha256`
+
+Before publishing artifacts received from another Mac, verify them locally:
+
+```bash
+shasum -a 256 -c Liddddd-<version>.dmg.sha256
+hdiutil verify Liddddd-<version>.dmg
+xcrun stapler validate Liddddd-<version>.dmg
+spctl --assess --type open --context context:primary-signature \
+  --verbose=2 Liddddd-<version>.dmg
+```
 
 ## Release checklist
 
@@ -66,9 +121,9 @@ before attaching them to a GitHub Release.
 4. Create the Developer ID release build.
 5. Confirm the bundle contains no `manage-local-helper.sh` or legacy helper
    plist.
-6. Notarize, staple, and repackage the app.
+6. Run `scripts/notarize-release.sh` to notarize, staple, and package the app.
 7. Verify code signing and Gatekeeper assessment on the final app.
-8. Upload the final ZIP and SHA-256 checksum to GitHub Releases.
+8. Upload the final DMG and SHA-256 checksum to GitHub Releases.
 9. Test installation, helper approval, start, automatic stop, manual stop, and
    helper removal on a separate Mac or clean user account.
 
